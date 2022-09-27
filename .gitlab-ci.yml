@@ -1,0 +1,18 @@
+stages:
+  - update-from-upstream
+
+include:
+  - project: 'e/templates'
+    ref: master
+    file: '/gitlab-ci/.gitlab-ci-import-updates-from-upstream.yml'
+
+t:
+  script:
+    - 'which xmlstarlet || ( apt-get update -y && apt-get install xmlstarlet -y )'
+    - git remote add aosp $AOSP_URL
+    - git fetch aosp
+    - git checkout $CI_COMMIT_REF_NAME
+    - git merge $(curl -s https://gitlab.e.foundation/e/os/android/-/raw/$CI_COMMIT_REF_NAME/default.xml | xmlstarlet sel -T -t -m '/manifest/remote[@name="aosp"]/@revision' -v . | awk -F '/' '{print $NF}')
+    - git push
+  variables:
+    AOSP_URL: https://android.googlesource.com/platform/frameworks/libs/net/
