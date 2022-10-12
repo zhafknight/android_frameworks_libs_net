@@ -50,6 +50,7 @@ class BpfMap {
     // flag must be within BPF_OBJ_FLAG_MASK, ie. 0, BPF_F_RDONLY, BPF_F_WRONLY
     BpfMap<Key, Value>(const char* pathname, uint32_t flags) {
         mMapFd.reset(mapRetrieve(pathname, flags));
+        if (mMapFd < 0) abort();
         if (isAtLeastKernelVersion(4, 14, 0)) {
             if (bpfGetFdKeySize(mMapFd) != sizeof(Key)) abort();
             if (bpfGetFdValueSize(mMapFd) != sizeof(Value)) abort();
