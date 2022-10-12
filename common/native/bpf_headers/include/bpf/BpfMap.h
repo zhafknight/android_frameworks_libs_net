@@ -22,6 +22,7 @@
 #include <android-base/stringprintf.h>
 #include <android-base/unique_fd.h>
 #include <utils/Log.h>
+#include <sys/system_properties.h>
 #include "bpf/BpfUtils.h"
 
 namespace android {
@@ -47,13 +48,18 @@ class BpfMap {
     BpfMap<Key, Value>() {};
 
   protected:
+    char ebpf_supported[PROP_VALUE_MAX] = "";
+    bool USE_EBPF = __system_property_get("ro.kernel.ebpf.supported", ebpf_supported) == 0 || strcmp(ebpf_supported, "false");
+
     // flag must be within BPF_OBJ_FLAG_MASK, ie. 0, BPF_F_RDONLY, BPF_F_WRONLY
     BpfMap<Key, Value>(const char* pathname, uint32_t flags) {
         mMapFd.reset(mapRetrieve(pathname, flags));
-        if (mMapFd < 0) abort();
-        if (isAtLeastKernelVersion(4, 14, 0)) {
-            if (bpfGetFdKeySize(mMapFd) != sizeof(Key)) abort();
-            if (bpfGetFdValueSize(mMapFd) != sizeof(Value)) abort();
+        if (USE_EBPF) {
+            if (mMapFd < 0) abort();
+            if (isAtLeastKernelVersion(4, 14, 0)) {
+                if (bpfGetFdKeySize(mMapFd) != sizeof(Key)) abort();
+                if (bpfGetFdValueSize(mMapFd) != sizeof(Value)) abort();
+            }
         }
     }
 
@@ -62,7 +68,8 @@ class BpfMap {
 
     BpfMap<Key, Value>(bpf_map_type map_type, uint32_t max_entries, uint32_t map_flags = 0) {
         mMapFd.reset(createMap(map_type, sizeof(Key), sizeof(Value), max_entries, map_flags));
-        if (mMapFd < 0) abort();
+        if (USE_EBPF)
+            if (mMapFd < 0) abort();
     }
 
     base::Result<Key> getFirstKey() const {
@@ -109,13 +116,15 @@ class BpfMap {
         if (mMapFd == -1) {
             return ErrnoErrorf("Pinned map not accessible or does not exist: ({})", path);
         }
-        if (isAtLeastKernelVersion(4, 14, 0)) {
-            // Normally we should return an error here instead of calling abort,
-            // but this cannot happen at runtime without a massive code bug (K/V type mismatch)
-            // and as such it's better to just blow the system up and let the developer fix it.
-            // Crashes are much more likely to be noticed than logs and missing functionality.
-            if (bpfGetFdKeySize(mMapFd) != sizeof(Key)) abort();
-            if (bpfGetFdValueSize(mMapFd) != sizeof(Value)) abort();
+        if (USE_EBPF) {
+          if (isAtLeastKernelVersion(4, 14, 0)) {
+              // Normally we should return an error here instead of calling abort,
+              // but this cannot happen at runtime without a massive code bug (K/V type mismatch)
+              // and as such it's better to just blow the system up and let the developer fix it.
+              // Crashes are much more likely to be noticed than logs and missing functionality.
+              if (bpfGetFdKeySize(mMapFd) != sizeof(Key)) abort();
+              if (bpfGetFdValueSize(mMapFd) != sizeof(Value)) abort();
+            }
         }
         return {};
     }
