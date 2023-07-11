@@ -32,10 +32,12 @@ public class ConnectivitySettingsUtils {
     public static final int PRIVATE_DNS_MODE_OFF = 1;
     public static final int PRIVATE_DNS_MODE_OPPORTUNISTIC = 2;
     public static final int PRIVATE_DNS_MODE_PROVIDER_HOSTNAME = 3;
+    public static final int PRIVATE_DNS_MODE_QUADNINE = 4;
 
     public static final String PRIVATE_DNS_DEFAULT_MODE = "private_dns_default_mode";
     public static final String PRIVATE_DNS_MODE = "private_dns_mode";
     public static final String PRIVATE_DNS_MODE_OFF_STRING = "off";
+    public static final String PRIVATE_DNS_MODE_QUADNINE_STRING = "quadnine";
     public static final String PRIVATE_DNS_MODE_OPPORTUNISTIC_STRING = "opportunistic";
     public static final String PRIVATE_DNS_MODE_PROVIDER_HOSTNAME_STRING = "hostname";
     public static final String PRIVATE_DNS_SPECIFIER = "private_dns_specifier";
@@ -50,6 +52,8 @@ public class ConnectivitySettingsUtils {
         switch (mode) {
             case PRIVATE_DNS_MODE_OFF:
                 return PRIVATE_DNS_MODE_OFF_STRING;
+            case PRIVATE_DNS_MODE_QUADNINE:
+                return PRIVATE_DNS_MODE_QUADNINE_STRING;
             case PRIVATE_DNS_MODE_OPPORTUNISTIC:
                 return PRIVATE_DNS_MODE_OPPORTUNISTIC_STRING;
             case PRIVATE_DNS_MODE_PROVIDER_HOSTNAME:
@@ -63,6 +67,8 @@ public class ConnectivitySettingsUtils {
         switch (mode) {
             case "off":
                 return PRIVATE_DNS_MODE_OFF;
+            case "quadnine":
+                return PRIVATE_DNS_MODE_QUADNINE;
             case "hostname":
                 return PRIVATE_DNS_MODE_PROVIDER_HOSTNAME;
             case "opportunistic":
@@ -96,6 +102,7 @@ public class ConnectivitySettingsUtils {
      */
     public static void setPrivateDnsMode(@NonNull Context context, int mode) {
         if (!(mode == PRIVATE_DNS_MODE_OFF
+                || mode == PRIVATE_DNS_MODE_QUADNINE
                 || mode == PRIVATE_DNS_MODE_OPPORTUNISTIC
                 || mode == PRIVATE_DNS_MODE_PROVIDER_HOSTNAME)) {
             throw new IllegalArgumentException("Invalid private dns mode: " + mode);
